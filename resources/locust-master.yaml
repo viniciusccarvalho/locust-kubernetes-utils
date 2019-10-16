@@ -1,0 +1,55 @@
+apiVersion: "apps/v1"
+kind: Deployment
+metadata:
+  name: {name}-locust-master
+  labels:
+    app: {name}-locust-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {name}-locust-master
+      type: locust-master
+  template:
+    metadata:
+      labels:
+        app: {name}-locust-master
+        type: locust-master
+    spec:
+      containers:
+      - image: viniciusccarvalho/locust
+        name: locust-container
+        env:
+          - name: LOCUST_MODE
+            value: master
+          - name: LOCUSTFILE_PATH
+            value: "/data/tests/{test_file}"
+          - name: TARGET_URL
+            value: {target_host}
+        ports:
+          - name: loc-master-web
+            containerPort: 8089
+            protocol: TCP
+          - name: loc-master-p1
+            containerPort: 5557
+            protocol: TCP
+          - name: loc-master-p2
+            containerPort: 5558
+            protocol: TCP
+        volumeMounts:
+        - name: workdir
+          mountPath: "/data/"
+      initContainers:
+      - name: gitbox
+        image: gcr.io/cloud-cuckooland/alpine-git
+        command:
+        - git
+        - clone
+        - "{repo}"
+        - "/data/tests"
+        volumeMounts:
+        - name: workdir
+          mountPath: "/data/"
+      volumes:
+      - name: workdir
+        emptyDir: {{}}

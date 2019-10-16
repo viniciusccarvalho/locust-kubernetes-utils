@@ -1,0 +1,47 @@
+apiVersion: "apps/v1"
+kind: Deployment
+metadata:
+  name: {name}-locust-worker
+  labels:
+    app: {name}-locust-worker
+spec:
+  replicas: {size}
+  selector:
+    matchLabels:
+      app: {name}-locust-worker
+      type: locust-worker
+  template:
+    metadata:
+      labels:
+        app: {name}-locust-worker
+        type: locust-worker
+    spec:
+      containers:
+        - image: viniciusccarvalho/locust
+          name: locust-container
+          env:
+            - name: LOCUST_MODE
+              value: slave
+            - name: LOCUSTFILE_PATH
+              value: "/data/tests/{test_file}"
+            - name: TARGET_URL
+              value: {target_host}
+            - name: LOCUST_MASTER_HOST
+              value: {name}-locust-master-service
+          volumeMounts:
+            - name: workdir
+              mountPath: "/data/"
+      initContainers:
+        - name: gitbox
+          image: gcr.io/cloud-cuckooland/alpine-git
+          command:
+            - git
+            - clone
+            - "{repo}"
+            - "/data/tests"
+          volumeMounts:
+            - name: workdir
+              mountPath: "/data/"
+      volumes:
+        - name: workdir
+          emptyDir: {{}}
