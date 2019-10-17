@@ -33,7 +33,7 @@ spec:
               mountPath: "/data/"
       initContainers:
         - name: gitbox
-          image: gcr.io/cloud-cuckooland/alpine-git
+          image: viniciusccarvalho/alpine-git
           command:
             - git
             - clone
