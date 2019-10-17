@@ -1,0 +1,59 @@
+= Introduction
+
+A simple script to generate kubernetes manifest files to deploy a https://locust.io[locust.io] cluster.
+
+I've based this on the article published by the https://cloud.google.com/solutions/distributed-load-testing-using-gke[Google Cloud] team.
+
+The main issue with that approach is that you would need to generate a new docker image for each test, seemed a bit overwhelming.
+
+So I changed the manifests to use a initContainer section that pulls the tests from github (where they really should be).
+
+= Running
+
+Assuming you install all dependencies with `pip install -r requirements.txt`
+
+```
+python locust-deploy.py -h
+usage: locust-deploy.py [-h] -n NAME -t TARGET_HOST -r REPO -f TEST_FILE
+                        [-s SIZE] [-o OUTPUT]
+
+Locust cluster manifest generator
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NAME, --name NAME  Name of the test cluster artifacts
+  -t TARGET_HOST, --target_host TARGET_HOST
+                        Target host to run tests against
+  -r REPO, --repo REPO  Github repository containing the tests
+  -f TEST_FILE, --test_file TEST_FILE
+                        The locust file to be used, relative to the github
+                        root path
+  -s SIZE, --size SIZE  Number of workers pods to be created. Default to 1
+  -o OUTPUT, --output OUTPUT
+                        Manifest files output
+```
+
+So for example if you run:
+
+```
+python locust-deploy.py -n appengine -t https://<redacted>.appspot.com  -r https://github.com/viniciusccarvalho/locust-tests -f simple/benchmark.py -s 10 -o ~/tmp/locust-deployments
+```
+
+on the `~tmp/locust-deployments` folder you will get 4 manifests:
+
+```
+-rw-r--r--   1 vinnyc  primarygroup   246 Oct 16 17:45 appengine-locust-master-service-lb.yaml
+-rw-r--r--   1 vinnyc  primarygroup   352 Oct 16 17:45 appengine-locust-master-service.yaml
+-rw-r--r--   1 vinnyc  primarygroup  1415 Oct 16 17:45 appengine-locust-master.yaml
+-rw-r--r--   1 vinnyc  primarygroup  1285 Oct 16 17:45 appengine-locust-worker.yaml
+```
+
+Just deploy them and you will be able to access the master node via the loadbalancer IP on port 8089
+
+== Docker image
+
+A docker image is provided for the locust application. At the time of this project the official docker image from
+locust.io was broken. So instead I pushed one at `viniciusccarvalho/locust`. If you need to replace, just change the `/resources` templates
+for the `master` and `worker` files.
+
+
